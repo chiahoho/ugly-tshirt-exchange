@@ -1,8 +1,9 @@
 FROM node:22-alpine AS builder
 
 WORKDIR /app
+ENV NODE_OPTIONS="--max-old-space-size=512"
 COPY package.json package-lock.json ./
-RUN npm ci
+RUN npm ci --maxsockets 1
 COPY . .
 RUN npx prisma generate
 RUN npm run build
