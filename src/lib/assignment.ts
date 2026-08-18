@@ -8,6 +8,10 @@ const RIGGED: [string, string[]][] = [
   ["marli", ["leelun", "lee-lun", "leelun lai", "lee-lun lai"]],
 ];
 
+const FORBIDDEN: [string[], string[]][] = [
+  [["akshay", "akshay thapa"], ["chia"]],
+];
+
 function normalize(name: string): string {
   return name.trim().toLowerCase();
 }
@@ -41,6 +45,14 @@ function nameMatches(memberName: string, variants: string[]): boolean {
   });
 }
 
+function isForbiddenAssignment(giver: Member, receiver: Member): boolean {
+  return FORBIDDEN.some(
+    ([giverVariants, receiverVariants]) =>
+      nameMatches(giver.name, giverVariants) &&
+      nameMatches(receiver.name, receiverVariants),
+  );
+}
+
 export function assignMembers(members: Member[]): Map<string, string> {
   if (members.length < 2) throw new Error("Need at least 2 people");
 
@@ -67,7 +79,13 @@ export function assignMembers(members: Member[]): Map<string, string> {
       const j = Math.floor(Math.random() * (i + 1));
       [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
     }
-    if (shuffled.every((id, i) => id !== giverIds[i])) {
+    if (shuffled.every((id, i) => {
+      const giver = unassignedGivers[i];
+      const receiver = availableTargets.find((member) => member.id === id);
+      return receiver !== undefined &&
+        id !== giverIds[i] &&
+        !isForbiddenAssignment(giver, receiver);
+    })) {
       for (let i = 0; i < giverIds.length; i++) {
         result.set(giverIds[i], shuffled[i]);
       }
